@@ -4,7 +4,8 @@ require("dotenv").config();
 
 const app = express();
 
-const { dbConnection } = require("./db/db.Connect");
+// const { dbConnection } = require("./db/db.connect");
+const { dbConnection } = require("./db/db.connect");
 const Lead = require("./models/lead.models");
 const SalesAgent = require("./models/sales.models");
 const Comment = require("./models/comment.models");
