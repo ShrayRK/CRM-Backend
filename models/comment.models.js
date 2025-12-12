@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Comment Schema
 const commentSchema = new mongoose.Schema({
   lead: {
     type: mongoose.Schema.Types.ObjectId,
