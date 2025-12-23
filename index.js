@@ -4,78 +4,48 @@ require("dotenv").config();
 
 const app = express();
 
-// const { dbConnection } = require("./db/db.connect");
 const { dbConnection } = require("./db/db.connect");
 const Lead = require("./models/lead.models");
-const SalesAgent = require("./models/sales.models");
+const SalesAgent = require("./models/salesAgent.models");
 const Comment = require("./models/comment.models");
 const Tag = require("./models/tag.models");
 
 dbConnection();
 
-const corsOptions = {
-  origin: "*",
-  credentials: true,
-  optionSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
+app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json());
 
 async function addLead(newLead) {
-  try {
-    const lead = new Lead(newLead);
-    const savedLead = await lead.save();
-    return savedLead;
-  } catch (error) {
-    throw error;
-  }
+  const lead = new Lead(newLead);
+  return await lead.save();
 }
 
 async function getAllLeads(filters = {}) {
-  try {
-    const query = {};
+  const query = {};
 
-    if (filters.salesAgent) query.salesAgent = filters.salesAgent;
-    if (filters.status) query.status = filters.status;
-    if (filters.source) query.source = filters.source;
-    if (filters.tags) query.tags = { $in: filters.tags.split(",") };
+  if (filters.salesAgent) query.salesAgent = filters.salesAgent;
+  if (filters.status) query.status = filters.status;
+  if (filters.source) query.source = filters.source;
+  if (filters.tags) query.tags = { $in: filters.tags.split(",") };
 
-    const leads = await Lead.find(query);
-    return leads;
-  } catch (error) {
-    throw error;
-  }
+  return await Lead.find(query).populate("salesAgentId");
 }
 
 async function getLeadById(id) {
-  try {
-    const lead = await Lead.findById(id);
-    return lead;
-  } catch (error) {
-    throw error;
-  }
+  return await Lead.findById(id).populate("salesAgent");
 }
 
 async function updateLead(id, data) {
-  try {
-    const updatedLead = await Lead.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
-    return updatedLead;
-  } catch (error) {
-    throw error;
-  }
+  return await Lead.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true,
+  }).populate("salesAgent");
 }
 
 async function deleteLead(id) {
-  try {
-    const deletedLead = await Lead.findByIdAndDelete(id);
-    return deletedLead;
-  } catch (error) {
-    throw error;
-  }
+  return await Lead.findByIdAndDelete(id);
 }
+
 
 app.post("/leads", async (req, res) => {
   try {
@@ -89,9 +59,6 @@ app.post("/leads", async (req, res) => {
 app.get("/leads", async (req, res) => {
   try {
     const leads = await getAllLeads(req.query);
-    if (leads.length === 0) {
-      return res.status(404).json({ error: "No leads found." });
-    }
     res.json(leads);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch leads." });
@@ -134,24 +101,16 @@ app.delete("/leads/:id", async (req, res) => {
   }
 });
 
+
 async function addAgent(newAgent) {
-  try {
-    const agent = new SalesAgent(newAgent);
-    const savedAgent = await agent.save();
-    return savedAgent;
-  } catch (error) {
-    throw error;
-  }
+  const agent = new SalesAgent(newAgent);
+  return await agent.save();
 }
 
 async function getAllAgents() {
-  try {
-    const agents = await SalesAgent.find();
-    return agents;
-  } catch (error) {
-    throw error;
-  }
+  return await SalesAgent.find();
 }
+
 
 app.post("/agents", async (req, res) => {
   try {
@@ -159,7 +118,9 @@ app.post("/agents", async (req, res) => {
     res.status(201).json(agent);
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(409).json({ error: "Agent with this email already exists." });
+      return res
+        .status(409)
+        .json({ error: "Agent with this email already exists." });
     }
     res.status(400).json({ error: "Failed to create agent." });
   }
@@ -168,37 +129,25 @@ app.post("/agents", async (req, res) => {
 app.get("/agents", async (req, res) => {
   try {
     const agents = await getAllAgents();
-    if (agents.length === 0) {
-      return res.status(404).json({ error: "No agents found." });
-    }
     res.json(agents);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch agents." });
   }
 });
 
+
 async function addComment(leadId, newComment) {
-  try {
-    const lead = await Lead.findById(leadId);
-    if (!lead) {
-      return null;
-    }
-    const comment = new Comment({ ...newComment, lead: leadId });
-    const savedComment = await comment.save();
-    return savedComment;
-  } catch (error) {
-    throw error;
-  }
+  const lead = await Lead.findById(leadId);
+  if (!lead) return null;
+
+  const comment = new Comment({ ...newComment, lead: leadId });
+  return await comment.save();
 }
 
 async function getCommentsByLead(leadId) {
-  try {
-    const comments = await Comment.find({ lead: leadId });
-    return comments;
-  } catch (error) {
-    throw error;
-  }
+  return await Comment.find({ lead: leadId });
 }
+
 
 app.post("/leads/:id/comments", async (req, res) => {
   try {
@@ -215,9 +164,6 @@ app.post("/leads/:id/comments", async (req, res) => {
 app.get("/leads/:id/comments", async (req, res) => {
   try {
     const comments = await getCommentsByLead(req.params.id);
-    if (comments.length === 0) {
-      return res.status(404).json({ error: "No comments found for this lead." });
-    }
     res.json(comments);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch comments." });
@@ -253,5 +199,5 @@ app.get("/report/pipeline", async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Anvaya backend running on port ${PORT}`);
+  console.log(`✅ Anvaya backend running on port ${PORT}`);
 });
