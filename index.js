@@ -145,9 +145,12 @@ async function addComment(leadId, newComment) {
 }
 
 async function getCommentsByLead(leadId) {
-  return await Comment.find({ lead: leadId });
+  return await Comment.find({ lead: leadId }).populate("author", "name email");
 }
 
+async function deleteComment(commentId) {
+  return await Comment.findByIdAndDelete(commentId);
+}
 
 app.post("/leads/:id/comments", async (req, res) => {
   try {
@@ -167,6 +170,18 @@ app.get("/leads/:id/comments", async (req, res) => {
     res.json(comments);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch comments." });
+  }
+});
+
+app.delete("/comments/:id", async (req, res) => {
+  try {
+    const deleted = await deleteComment(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+    res.json({ message: "Comment deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete comment" });
   }
 });
 

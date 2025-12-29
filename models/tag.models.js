@@ -4,7 +4,7 @@ const tagSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Tag name is required'],
-    unique: true,  // Ensures that each tag name is unique
+    unique: true,  
   },
   createdAt: {
     type: Date,
