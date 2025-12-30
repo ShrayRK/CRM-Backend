@@ -23,6 +23,9 @@ app.use(
 
 app.use(express.json());
 
+app.options("*", cors());
+
+
 async function addLead(newLead) {
   const lead = new Lead(newLead);
   return await lead.save();
