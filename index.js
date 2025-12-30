@@ -12,19 +12,16 @@ const Tag = require("./models/tag.models");
 
 dbConnection();
 
-app.use(
-  cors({
-    origin: ["http://localhost:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: ["http://localhost:5173"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
-
-app.options("*", cors());
-
+app.options("*", cors(corsOptions));
 
 async function addLead(newLead) {
   const lead = new Lead(newLead);
@@ -43,26 +40,25 @@ async function getAllLeads(filters = {}) {
 }
 
 async function getLeadById(id) {
-  return await Lead.findById(id).populate("salesAgent");
+  return await Lead.findById(id).populate("salesAgentId");
 }
 
 async function updateLead(id, data) {
   return await Lead.findByIdAndUpdate(id, data, {
     new: true,
     runValidators: true,
-  }).populate("salesAgent");
+  }).populate("salesAgentId");
 }
 
 async function deleteLead(id) {
   return await Lead.findByIdAndDelete(id);
 }
 
-
 app.post("/leads", async (req, res) => {
   try {
     const savedLead = await addLead(req.body);
     res.status(201).json(savedLead);
-  } catch (error) {
+  } catch {
     res.status(400).json({ error: "Failed to create lead." });
   }
 });
@@ -71,7 +67,7 @@ app.get("/leads", async (req, res) => {
   try {
     const leads = await getAllLeads(req.query);
     res.json(leads);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch leads." });
   }
 });
@@ -79,11 +75,9 @@ app.get("/leads", async (req, res) => {
 app.get("/leads/:id", async (req, res) => {
   try {
     const lead = await getLeadById(req.params.id);
-    if (!lead) {
-      return res.status(404).json({ error: "Lead not found." });
-    }
+    if (!lead) return res.status(404).json({ error: "Lead not found." });
     res.json(lead);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch lead." });
   }
 });
@@ -91,11 +85,10 @@ app.get("/leads/:id", async (req, res) => {
 app.put("/leads/:id", async (req, res) => {
   try {
     const updatedLead = await updateLead(req.params.id, req.body);
-    if (!updatedLead) {
+    if (!updatedLead)
       return res.status(404).json({ error: "Lead not found." });
-    }
     res.json(updatedLead);
-  } catch (error) {
+  } catch {
     res.status(400).json({ error: "Failed to update lead." });
   }
 });
@@ -103,15 +96,13 @@ app.put("/leads/:id", async (req, res) => {
 app.delete("/leads/:id", async (req, res) => {
   try {
     const deletedLead = await deleteLead(req.params.id);
-    if (!deletedLead) {
+    if (!deletedLead)
       return res.status(404).json({ error: "Lead not found." });
-    }
     res.json({ message: "Lead deleted." });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to delete lead." });
   }
 });
-
 
 async function addAgent(newAgent) {
   const agent = new SalesAgent(newAgent);
@@ -121,7 +112,6 @@ async function addAgent(newAgent) {
 async function getAllAgents() {
   return await SalesAgent.find();
 }
-
 
 app.post("/agents", async (req, res) => {
   try {
@@ -141,11 +131,10 @@ app.get("/agents", async (req, res) => {
   try {
     const agents = await getAllAgents();
     res.json(agents);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch agents." });
   }
 });
-
 
 async function addComment(leadId, newComment) {
   const lead = await Lead.findById(leadId);
@@ -156,7 +145,9 @@ async function addComment(leadId, newComment) {
 }
 
 async function getCommentsByLead(leadId) {
-  return await Comment.find({ lead: leadId }).populate("author", "name email");
+  return await Comment.find({ lead: leadId })
+    .populate("author", "name email")
+    .sort({ createdAt: -1 });
 }
 
 async function deleteComment(commentId) {
@@ -166,11 +157,10 @@ async function deleteComment(commentId) {
 app.post("/leads/:id/comments", async (req, res) => {
   try {
     const savedComment = await addComment(req.params.id, req.body);
-    if (!savedComment) {
+    if (!savedComment)
       return res.status(404).json({ error: "Lead not found." });
-    }
     res.status(201).json(savedComment);
-  } catch (error) {
+  } catch {
     res.status(400).json({ error: "Failed to add comment." });
   }
 });
@@ -179,7 +169,7 @@ app.get("/leads/:id/comments", async (req, res) => {
   try {
     const comments = await getCommentsByLead(req.params.id);
     res.json(comments);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch comments." });
   }
 });
@@ -187,12 +177,11 @@ app.get("/leads/:id/comments", async (req, res) => {
 app.delete("/comments/:id", async (req, res) => {
   try {
     const deleted = await deleteComment(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ error: "Comment not found" });
-    }
-    res.json({ message: "Comment deleted" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete comment" });
+    if (!deleted)
+      return res.status(404).json({ error: "Comment not found." });
+    res.json({ message: "Comment deleted." });
+  } catch {
+    res.status(500).json({ error: "Failed to delete comment." });
   }
 });
 
@@ -206,7 +195,7 @@ app.get("/report/last-week", async (req, res) => {
     });
 
     res.json({ leadsCreatedLastWeek: count });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch last week report." });
   }
 });
@@ -216,9 +205,8 @@ app.get("/report/pipeline", async (req, res) => {
     const count = await Lead.countDocuments({
       status: { $ne: "Closed" },
     });
-
     res.json({ totalLeadsInPipeline: count });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch pipeline report." });
   }
 });
