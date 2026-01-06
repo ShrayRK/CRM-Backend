@@ -54,6 +54,10 @@ async function deleteLead(id) {
   return await Lead.findByIdAndDelete(id);
 }
 
+async function deleteAgent(id) {
+  return await SalesAgent.findByIdAndDelete(id);
+}
+
 app.post("/leads", async (req, res) => {
   try {
     const savedLead = await addLead(req.body);
@@ -103,6 +107,17 @@ app.delete("/leads/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete lead." });
   }
 });
+
+app.delete("/agents/:id", async (req, res) => {
+  try {
+    const deletedAgent = await deleteAgent(req.params.id);
+    if (!deletedAgent)
+      return res.status(404).json({error:"Agent not found."});
+    res.json({message: "Agent deleted." });
+  } catch (error) {
+    res.status(500).json({error: "Failed to delete agent." });
+  }
+})
 
 async function addAgent(newAgent) {
   const agent = new SalesAgent(newAgent);
