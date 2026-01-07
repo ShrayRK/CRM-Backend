@@ -22,7 +22,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.options("/", cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 async function addLead(newLead) {
   const lead = new Lead(newLead);
@@ -58,10 +58,6 @@ async function deleteLead(id) {
 async function deleteAgent(id) {
   return await SalesAgent.findByIdAndDelete(id);
 }
-
-app.get("/", (req, res) => {
-  res.json({ status: "CRM backend running" });
-});
 
 app.post("/leads", async (req, res) => {
   try {
