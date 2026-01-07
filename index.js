@@ -22,7 +22,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.options("*", cors(corsOptions));
+app.options("/", cors(corsOptions));
 
 async function addLead(newLead) {
   const lead = new Lead(newLead);
