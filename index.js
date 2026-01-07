@@ -1,258 +1,3 @@
-// const express = require("express");
-// const cors = require("cors");
-// require("dotenv").config();
-// const mongoose = require("mongoose");
-
-// const app = express();
-
-// const { dbConnection } = require("./db/db.connect");
-// const Lead = require("./models/lead.models");
-// const SalesAgent = require("./models/salesAgent.models");
-// const Comment = require("./models/comment.models");
-// const Tag = require("./models/tag.models");
-
-// dbConnection();
-
-// const corsOptions = {
-//   origin: ["http://localhost:5173","https://crm-frontend-three-sooty.vercel.app"],
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-//   credentials: true,
-// };
-
-// app.use(cors(corsOptions));
-// app.use(express.json());
-// app.options("*", cors(corsOptions));
-
-// async function addLead(newLead) {
-//   const lead = new Lead(newLead);
-//   return await lead.save();
-// }
-
-// async function getAllLeads(filters = {}) {
-//   const query = {};
-
-//   if (filters.salesAgentId) query.salesAgentId = filters.salesAgentId;
-//   if (filters.status) query.status = filters.status;
-//   if (filters.source) query.source = filters.source;
-//   if (filters.tags) query.tags = { $in: filters.tags.split(",") };
-
-//   return await Lead.find(query).populate("salesAgentId");
-// }
-
-// async function getLeadById(id) {
-//   return await Lead.findById(id).populate("salesAgentId");
-// }
-
-// async function updateLead(id, data) {
-//   return await Lead.findByIdAndUpdate(id, data, {
-//     new: true,
-//     runValidators: true,
-//   }).populate("salesAgentId");
-// }
-
-// async function deleteLead(id) {
-//   return await Lead.findByIdAndDelete(id);
-// }
-
-// async function deleteAgent(id) {
-//   return await SalesAgent.findByIdAndDelete(id);
-// }
-
-// app.post("/leads", async (req, res) => {
-//   try {
-//     const savedLead = await addLead(req.body);
-//     res.status(201).json(savedLead);
-//   } catch {
-//     res.status(400).json({ error: "Failed to create lead." });
-//   }
-// });
-
-// app.get("/leads", async (req, res) => {
-//   try {
-//     const leads = await getAllLeads(req.query);
-//     res.json(leads);
-//   } catch {
-//     res.status(500).json({ error: "Failed to fetch leads." });
-//   }
-// });
-
-// app.get("/leads/:id", async (req, res) => {
-//   try {
-//     const lead = await getLeadById(req.params.id);
-//     if (!lead) return res.status(404).json({ error: "Lead not found." });
-//     res.json(lead);
-//   } catch {
-//     res.status(500).json({ error: "Failed to fetch lead." });
-//   }
-// });
-
-// app.put("/leads/:id", async (req, res) => {
-//   try {
-//     const updatedLead = await updateLead(req.params.id, req.body);
-//     if (!updatedLead)
-//       return res.status(404).json({ error: "Lead not found." });
-//     res.json(updatedLead);
-//   } catch {
-//     res.status(400).json({ error: "Failed to update lead." });
-//   }
-// });
-
-// app.delete("/leads/:id", async (req, res) => {
-//   try {
-//     const deletedLead = await deleteLead(req.params.id);
-//     if (!deletedLead)
-//       return res.status(404).json({ error: "Lead not found." });
-//     res.json({ message: "Lead deleted." });
-//   } catch {
-//     res.status(500).json({ error: "Failed to delete lead." });
-//   }
-// });
-
-// app.delete("/agents/:id", async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     if (!mongoose.Types.ObjectId.isValid(id)) {
-//       return res.status(400).json({ error: "Invalid agent ID" });
-//     }
-
-//     const agentId = new mongoose.Types.ObjectId(id);
-
-//     const assignedLeads = await Lead.find({ salesAgentId: agentId });
-
-//     if (assignedLeads.length > 0) {
-//       return res.status(400).json({
-//         error: "Agent has assigned leads. Reassign or delete leads first."
-//       });
-//     }
-
-//     const deletedAgent = await SalesAgent.findByIdAndDelete(agentId);
-
-//     if (!deletedAgent) {
-//       return res.status(404).json({ error: "Agent not found." });
-//     }
-
-//     res.json({ message: "Agent deleted." });
-
-//   } catch (error) {
-//     console.error("Delete agent error:", error);
-//     res.status(500).json({ error: "Failed to delete agent." });
-//   }
-// });
-
-// async function addAgent(newAgent) {
-//   const agent = new SalesAgent(newAgent);
-//   return await agent.save();
-// }
-
-// async function getAllAgents() {
-//   return await SalesAgent.find();
-// }
-
-// app.post("/agents", async (req, res) => {
-//   try {
-//     const agent = await addAgent(req.body);
-//     res.status(201).json(agent);
-//   } catch (error) {
-//     if (error.code === 11000) {
-//       return res
-//         .status(409)
-//         .json({ error: "Agent with this email already exists." });
-//     }
-//     res.status(400).json({ error: "Failed to create agent." });
-//   }
-// });
-
-// app.get("/agents", async (req, res) => {
-//   try {
-//     const agents = await getAllAgents();
-//     res.json(agents);
-//   } catch {
-//     res.status(500).json({ error: "Failed to fetch agents." });
-//   }
-// });
-
-// async function addComment(leadId, newComment) {
-//   const lead = await Lead.findById(leadId);
-//   if (!lead) return null;
-
-//   const comment = new Comment({ ...newComment, lead: leadId });
-//   return await comment.save();
-// }
-
-// async function getCommentsByLead(leadId) {
-//   return await Comment.find({ lead: leadId })
-//     .populate("author", "name email")
-//     .sort({ createdAt: -1 });
-// }
-
-// async function deleteComment(commentId) {
-//   return await Comment.findByIdAndDelete(commentId);
-// }
-
-// app.post("/leads/:id/comments", async (req, res) => {
-//   try {
-//     const savedComment = await addComment(req.params.id, req.body);
-//     if (!savedComment)
-//       return res.status(404).json({ error: "Lead not found." });
-//     res.status(201).json(savedComment);
-//   } catch {
-//     res.status(400).json({ error: "Failed to add comment." });
-//   }
-// });
-
-// app.get("/leads/:id/comments", async (req, res) => {
-//   try {
-//     const comments = await getCommentsByLead(req.params.id);
-//     res.json(comments);
-//   } catch {
-//     res.status(500).json({ error: "Failed to fetch comments." });
-//   }
-// });
-
-// app.delete("/comments/:id", async (req, res) => {
-//   try {
-//     const deleted = await deleteComment(req.params.id);
-//     if (!deleted)
-//       return res.status(404).json({ error: "Comment not found." });
-//     res.json({ message: "Comment deleted." });
-//   } catch {
-//     res.status(500).json({ error: "Failed to delete comment." });
-//   }
-// });
-
-// app.get("/report/last-week", async (req, res) => {
-//   try {
-//     const oneWeekAgo = new Date();
-//     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-//     const count = await Lead.countDocuments({
-//       createdAt: { $gte: oneWeekAgo },
-//     });
-
-//     res.json({ leadsCreatedLastWeek: count });
-//   } catch {
-//     res.status(500).json({ error: "Failed to fetch last week report." });
-//   }
-// });
-
-// app.get("/report/pipeline", async (req, res) => {
-//   try {
-//     const count = await Lead.countDocuments({
-//       status: { $ne: "Closed" },
-//     });
-//     res.json({ totalLeadsInPipeline: count });
-//   } catch {
-//     res.status(500).json({ error: "Failed to fetch pipeline report." });
-//   }
-// });
-
-// const PORT = process.env.PORT || 5000;
-// app.listen(PORT, () => {
-//   console.log(`✅ Anvaya backend running on port ${PORT}`);
-// });
-
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -260,59 +5,72 @@ const mongoose = require("mongoose");
 
 const app = express();
 
-/* =======================
-   Database
-======================= */
 const { dbConnection } = require("./db/db.connect");
 const Lead = require("./models/lead.models");
 const SalesAgent = require("./models/salesAgent.models");
 const Comment = require("./models/comment.models");
+const Tag = require("./models/tag.models");
 
 dbConnection();
 
-/* =======================
-   Middleware
-======================= */
+const corsOptions = {
+  origin: ["http://localhost:5173","https://crm-frontend-three-sooty.vercel.app"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
+app.options("*", cors(corsOptions));
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://crm-frontend-three-sooty.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+async function addLead(newLead) {
+  const lead = new Lead(newLead);
+  return await lead.save();
+}
 
-// IMPORTANT for browser DELETE (preflight)
-app.options("*", cors());
+async function getAllLeads(filters = {}) {
+  const query = {};
 
-/* =======================
-   Health Check (Vercel)
-======================= */
-app.get("/", (req, res) => {
-  res.json({ status: "CRM backend running" });
-});
+  if (filters.salesAgentId) query.salesAgentId = filters.salesAgentId;
+  if (filters.status) query.status = filters.status;
+  if (filters.source) query.source = filters.source;
+  if (filters.tags) query.tags = { $in: filters.tags.split(",") };
 
-/* =======================
-   Leads
-======================= */
+  return await Lead.find(query).populate("salesAgentId");
+}
+
+async function getLeadById(id) {
+  return await Lead.findById(id).populate("salesAgentId");
+}
+
+async function updateLead(id, data) {
+  return await Lead.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true,
+  }).populate("salesAgentId");
+}
+
+async function deleteLead(id) {
+  return await Lead.findByIdAndDelete(id);
+}
+
+async function deleteAgent(id) {
+  return await SalesAgent.findByIdAndDelete(id);
+}
+
 app.post("/leads", async (req, res) => {
   try {
-    const lead = new Lead(req.body);
-    const savedLead = await lead.save();
+    const savedLead = await addLead(req.body);
     res.status(201).json(savedLead);
-  } catch (error) {
+  } catch {
     res.status(400).json({ error: "Failed to create lead." });
   }
 });
 
 app.get("/leads", async (req, res) => {
   try {
-    const leads = await Lead.find(req.query).populate("salesAgentId");
+    const leads = await getAllLeads(req.query);
     res.json(leads);
   } catch {
     res.status(500).json({ error: "Failed to fetch leads." });
@@ -320,73 +78,34 @@ app.get("/leads", async (req, res) => {
 });
 
 app.get("/leads/:id", async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid lead ID" });
+  try {
+    const lead = await getLeadById(req.params.id);
+    if (!lead) return res.status(404).json({ error: "Lead not found." });
+    res.json(lead);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch lead." });
   }
-
-  const lead = await Lead.findById(req.params.id).populate("salesAgentId");
-  if (!lead) return res.status(404).json({ error: "Lead not found." });
-
-  res.json(lead);
 });
 
 app.put("/leads/:id", async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid lead ID" });
-  }
-
   try {
-    const updated = await Lead.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate("salesAgentId");
-
-    if (!updated)
+    const updatedLead = await updateLead(req.params.id, req.body);
+    if (!updatedLead)
       return res.status(404).json({ error: "Lead not found." });
-
-    res.json(updated);
+    res.json(updatedLead);
   } catch {
     res.status(400).json({ error: "Failed to update lead." });
   }
 });
 
 app.delete("/leads/:id", async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid lead ID" });
-  }
-
-  const deleted = await Lead.findByIdAndDelete(req.params.id);
-  if (!deleted)
-    return res.status(404).json({ error: "Lead not found." });
-
-  res.json({ message: "Lead deleted." });
-});
-
-/* =======================
-   Agents
-======================= */
-app.post("/agents", async (req, res) => {
   try {
-    const agent = new SalesAgent(req.body);
-    const saved = await agent.save();
-    res.status(201).json(saved);
-  } catch (error) {
-    if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({ error: "Agent with this email already exists." });
-    }
-    res.status(400).json({ error: "Failed to create agent." });
-  }
-});
-
-app.get("/agents", async (req, res) => {
-  try {
-    const agents = await SalesAgent.find();
-    res.json(agents);
+    const deletedLead = await deleteLead(req.params.id);
+    if (!deletedLead)
+      return res.status(404).json({ error: "Lead not found." });
+    res.json({ message: "Lead deleted." });
   } catch {
-    res.status(500).json({ error: "Failed to fetch agents." });
+    res.status(500).json({ error: "Failed to delete lead." });
   }
 });
 
@@ -401,86 +120,136 @@ app.delete("/agents/:id", async (req, res) => {
     const agentId = new mongoose.Types.ObjectId(id);
 
     const assignedLeads = await Lead.find({ salesAgentId: agentId });
+
     if (assignedLeads.length > 0) {
       return res.status(400).json({
-        error: "Agent has assigned leads. Reassign or delete leads first.",
+        error: "Agent has assigned leads. Reassign or delete leads first."
       });
     }
 
     const deletedAgent = await SalesAgent.findByIdAndDelete(agentId);
-    if (!deletedAgent)
+
+    if (!deletedAgent) {
       return res.status(404).json({ error: "Agent not found." });
+    }
 
     res.json({ message: "Agent deleted." });
+
   } catch (error) {
     console.error("Delete agent error:", error);
     res.status(500).json({ error: "Failed to delete agent." });
   }
 });
 
-/* =======================
-   Comments
-======================= */
-app.post("/leads/:id/comments", async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid lead ID" });
+async function addAgent(newAgent) {
+  const agent = new SalesAgent(newAgent);
+  return await agent.save();
+}
+
+async function getAllAgents() {
+  return await SalesAgent.find();
+}
+
+app.post("/agents", async (req, res) => {
+  try {
+    const agent = await addAgent(req.body);
+    res.status(201).json(agent);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ error: "Agent with this email already exists." });
+    }
+    res.status(400).json({ error: "Failed to create agent." });
   }
+});
 
-  const lead = await Lead.findById(req.params.id);
-  if (!lead) return res.status(404).json({ error: "Lead not found." });
+app.get("/agents", async (req, res) => {
+  try {
+    const agents = await getAllAgents();
+    res.json(agents);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch agents." });
+  }
+});
 
-  const comment = new Comment({ ...req.body, lead: req.params.id });
-  const saved = await comment.save();
+async function addComment(leadId, newComment) {
+  const lead = await Lead.findById(leadId);
+  if (!lead) return null;
 
-  res.status(201).json(saved);
+  const comment = new Comment({ ...newComment, lead: leadId });
+  return await comment.save();
+}
+
+async function getCommentsByLead(leadId) {
+  return await Comment.find({ lead: leadId })
+    .populate("author", "name email")
+    .sort({ createdAt: -1 });
+}
+
+async function deleteComment(commentId) {
+  return await Comment.findByIdAndDelete(commentId);
+}
+
+app.post("/leads/:id/comments", async (req, res) => {
+  try {
+    const savedComment = await addComment(req.params.id, req.body);
+    if (!savedComment)
+      return res.status(404).json({ error: "Lead not found." });
+    res.status(201).json(savedComment);
+  } catch {
+    res.status(400).json({ error: "Failed to add comment." });
+  }
 });
 
 app.get("/leads/:id/comments", async (req, res) => {
-  const comments = await Comment.find({ lead: req.params.id })
-    .populate("author", "name email")
-    .sort({ createdAt: -1 });
-
-  res.json(comments);
+  try {
+    const comments = await getCommentsByLead(req.params.id);
+    res.json(comments);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch comments." });
+  }
 });
 
 app.delete("/comments/:id", async (req, res) => {
-  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-    return res.status(400).json({ error: "Invalid comment ID" });
+  try {
+    const deleted = await deleteComment(req.params.id);
+    if (!deleted)
+      return res.status(404).json({ error: "Comment not found." });
+    res.json({ message: "Comment deleted." });
+  } catch {
+    res.status(500).json({ error: "Failed to delete comment." });
   }
-
-  const deleted = await Comment.findByIdAndDelete(req.params.id);
-  if (!deleted)
-    return res.status(404).json({ error: "Comment not found." });
-
-  res.json({ message: "Comment deleted." });
 });
 
-/* =======================
-   Reports
-======================= */
 app.get("/report/last-week", async (req, res) => {
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  try {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  const count = await Lead.countDocuments({
-    createdAt: { $gte: oneWeekAgo },
-  });
+    const count = await Lead.countDocuments({
+      createdAt: { $gte: oneWeekAgo },
+    });
 
-  res.json({ leadsCreatedLastWeek: count });
+    res.json({ leadsCreatedLastWeek: count });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch last week report." });
+  }
 });
 
 app.get("/report/pipeline", async (req, res) => {
-  const count = await Lead.countDocuments({
-    status: { $ne: "Closed" },
-  });
-
-  res.json({ totalLeadsInPipeline: count });
+  try {
+    const count = await Lead.countDocuments({
+      status: { $ne: "Closed" },
+    });
+    res.json({ totalLeadsInPipeline: count });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch pipeline report." });
+  }
 });
 
-/* =======================
-   Server
-======================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ CRM backend running on port ${PORT}`);
+  console.log(`✅ Anvaya backend running on port ${PORT}`);
 });
+
