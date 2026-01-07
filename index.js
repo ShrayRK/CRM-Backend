@@ -59,6 +59,10 @@ async function deleteAgent(id) {
   return await SalesAgent.findByIdAndDelete(id);
 }
 
+app.get("/", (req, res) => {
+  res.json({ status: "CRM backend running" });
+});
+
 app.post("/leads", async (req, res) => {
   try {
     const savedLead = await addLead(req.body);
