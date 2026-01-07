@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -125,8 +126,8 @@ app.delete("/agents/:id", async (req, res) => {
       return res.status(404).json({ error: "Agent not found." });
 
     res.json({ message: "Agent deleted." });
-  } catch {
-    console.error(error);
+  } catch (error) {
+    console.error("Delete agent error:", error);
     res.status(500).json({ error: "Failed to delete agent." });
   }
 });
