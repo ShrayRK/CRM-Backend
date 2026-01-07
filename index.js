@@ -111,7 +111,13 @@ app.delete("/leads/:id", async (req, res) => {
 
 app.delete("/agents/:id", async (req, res) => {
   try {
-    const agentId = new mongoose.Types.ObjectId(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid agent ID" });
+    }
+
+    const agentId = new mongoose.Types.ObjectId(id);
 
     const assignedLeads = await Lead.find({ salesAgentId: agentId });
 
@@ -122,16 +128,18 @@ app.delete("/agents/:id", async (req, res) => {
     }
 
     const deletedAgent = await SalesAgent.findByIdAndDelete(agentId);
-    if (!deletedAgent)
+
+    if (!deletedAgent) {
       return res.status(404).json({ error: "Agent not found." });
+    }
 
     res.json({ message: "Agent deleted." });
+
   } catch (error) {
     console.error("Delete agent error:", error);
     res.status(500).json({ error: "Failed to delete agent." });
   }
 });
-
 
 async function addAgent(newAgent) {
   const agent = new SalesAgent(newAgent);
