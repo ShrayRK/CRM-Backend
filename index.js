@@ -31,7 +31,7 @@ async function addLead(newLead) {
 async function getAllLeads(filters = {}) {
   const query = {};
 
-  if (filters.salesAgent) query.salesAgent = filters.salesAgent;
+  if (filters.salesAgentId) query.salesAgentId = filters.salesAgentId;
   if (filters.status) query.status = filters.status;
   if (filters.source) query.source = filters.source;
   if (filters.tags) query.tags = { $in: filters.tags.split(",") };
@@ -110,7 +110,7 @@ app.delete("/leads/:id", async (req, res) => {
 
 app.delete("/agents/:id", async (req, res) => {
   try {
-    const agentId = req.params.id;
+    const agentId = new mongoose.Types.ObjectId(req.params.id);
 
     const assignedLeads = await Lead.find({ salesAgentId: agentId });
 
@@ -126,6 +126,7 @@ app.delete("/agents/:id", async (req, res) => {
 
     res.json({ message: "Agent deleted." });
   } catch {
+    console.error(error);
     res.status(500).json({ error: "Failed to delete agent." });
   }
 });
