@@ -110,14 +110,26 @@ app.delete("/leads/:id", async (req, res) => {
 
 app.delete("/agents/:id", async (req, res) => {
   try {
-    const deletedAgent = await deleteAgent(req.params.id);
+    const agentId = req.params.id;
+
+    const assignedLeads = await Lead.find({ salesAgentId: agentId });
+
+    if (assignedLeads.length > 0) {
+      return res.status(400).json({
+        error: "Agent has assigned leads. Reassign or delete leads first."
+      });
+    }
+
+    const deletedAgent = await SalesAgent.findByIdAndDelete(agentId);
     if (!deletedAgent)
-      return res.status(404).json({error:"Agent not found."});
-    res.json({message: "Agent deleted." });
-  } catch (error) {
-    res.status(500).json({error: "Failed to delete agent." });
+      return res.status(404).json({ error: "Agent not found." });
+
+    res.json({ message: "Agent deleted." });
+  } catch {
+    res.status(500).json({ error: "Failed to delete agent." });
   }
-})
+});
+
 
 async function addAgent(newAgent) {
   const agent = new SalesAgent(newAgent);
